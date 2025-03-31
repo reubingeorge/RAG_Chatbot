@@ -4,6 +4,7 @@ import logging
 from django.shortcuts import render, HttpResponse
 from django.views.decorators.http import require_POST
 from django.conf import settings
+from django.views.decorators.cache import never_cache
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres.vectorstores import PGVector
