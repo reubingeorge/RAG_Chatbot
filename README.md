@@ -1,6 +1,7 @@
-in docker-compose.yml you need to put in your OpenAI key for this project to work.
+
+<p>in docker-compose.yml you need to put in your OpenAI key for this project to work.</p>
 
 
 
-docker compose build
-docker-compose up
+<p>docker compose build</p>
+<p>docker-compose up</p>
