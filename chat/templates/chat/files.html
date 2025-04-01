@@ -51,6 +51,29 @@
     .progress-bar {
       animation: progress 8s ease-in-out forwards;
     }
+
+    #drop-area {
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    #drop-area.border-blue-500 {
+      transform: scale(1.01);
+    }
+
+    #drop-area::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background: rgba(59, 130, 246, 0.05);
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+
+    #drop-area.bg-blue-50::after {
+      opacity: 1;
+    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen py-8">
@@ -66,7 +89,7 @@
         <span>Go to Chat</span>
       </a>
     </header>
-    
+
     <!-- Main Content -->
     <div class="bg-white rounded-lg shadow-sm p-6">
       <!-- Section Title -->
@@ -77,14 +100,14 @@
         </h2>
         <p class="text-gray-500 text-sm mt-1">Manage your PDF files or upload new ones</p>
       </div>
-      
+
       <!-- Upload Section -->
       <div class="mb-6 pb-6 border-b border-gray-200">
         <h3 class="text-md font-medium mb-4 flex items-center">
           <i class="fas fa-upload text-blue-500 mr-2"></i>
           Upload New Documents
         </h3>
-        
+
         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors" id="drop-area">
           <!-- Upload form with explicit id -->
           <form id="upload-form"
@@ -200,6 +223,9 @@
   <!-- JavaScript -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
+      // Initialize drag and drop functionality
+      initDragAndDrop();
+
       // Configure HTMX with CSRF token
       document.body.addEventListener("htmx:configRequest", function(event) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -236,6 +262,81 @@
         }
       });
     });
+
+    function initDragAndDrop() {
+      const dropArea = document.getElementById('drop-area');
+      const fileInput = document.getElementById('file-input');
+
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+
+      // Highlight drop area when item is dragged over it
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+
+      // Handle dropped files
+      dropArea.addEventListener('drop', handleDrop, false);
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      function highlight() {
+        dropArea.classList.add('border-blue-500');
+        dropArea.classList.add('bg-blue-50');
+      }
+
+      function unhighlight() {
+        dropArea.classList.remove('border-blue-500');
+        dropArea.classList.remove('bg-blue-50');
+      }
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        // Check if files are PDFs
+        const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
+
+        if (pdfFiles.length === 0) {
+          showFileTypeError();
+          return;
+        }
+
+        // Convert FileList to a DataTransfer object for the file input
+        const dataTransfer = new DataTransfer();
+        Array.from(pdfFiles).forEach(file => {
+          dataTransfer.items.add(file);
+        });
+
+        // Set the files to the file input
+        fileInput.files = dataTransfer.files;
+
+        // Update the file list display
+        updateFileList();
+      }
+
+      function showFileTypeError() {
+        const uploadResult = document.getElementById('upload-result');
+        uploadResult.innerHTML = document.getElementById('error-template').innerHTML;
+        const errorMessage = uploadResult.querySelector('.error-message');
+        errorMessage.textContent = 'Please upload PDF files only.';
+
+        // Hide the error after 3 seconds
+        setTimeout(() => {
+          uploadResult.innerHTML = '';
+        }, 3000);
+      }
+    }
 
     // Function to show delete confirmation modal
     function showDeleteConfirmation(form, fileName) {
