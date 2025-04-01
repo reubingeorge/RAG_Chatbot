@@ -21,7 +21,7 @@ services:
       - DEBUG=1
       - SECRET_KEY=django-insecure-ragbot123!
       - ALLOWED_HOSTS=*
-      - OPENAI_API_KEY=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
+      - OPENAI_API_KEY=
       - DB_NAME=chatbot_db
       - DB_USER=postgres
       - DB_PASSWORD=postgres
